@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Election Voting System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px;
+            text-align: center;
+        }
+        .container {
+            width: 90%;
+            margin: auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        select, input[type="text"], button {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            margin-top: 5px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        footer {
+            text-align: center;
+            padding: 20px;
+            background-color: #4CAF50;
+            color: white;
+            position: absolute;
+            width: 100%;
+            bottom: 0;
+        }
+        .message {
+            padding: 15px;
+            margin-top: 20px;
+            background-color: #f0f8ff;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .vote-display, .winner-display {
+            margin-top: 30px;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            background-color: #fff;
+        }
+        .winner-display {
+            background-color: #e0f7fa;
+            border-color: #b2ebf2;
+        }
+        .password-container {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+
+        /* Mobile-first media queries */
+        @media screen and (max-width: 768px) {
+            .container {
+                width: 95%;
+            }
+            button {
+                font-size: 14px;
+                padding: 12px;
+            }
+            input[type="text"], select {
+                font-size: 14px;
+            }
+        }
+
+        @media screen and (max-width: 480px) {
+            header {
+                font-size: 18px;
+            }
+            button {
+                font-size: 14px;
+                padding: 14px;
+            }
+            footer {
+                font-size: 14px;
+            }
+        }
+
+        /* Focused input styling for better accessibility */
+        input:focus, select:focus, button:focus {
+            outline: none;
+            border: 2px solid #4CAF50;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Election Voting System</h1>
+    <p>Cast your vote in the upcoming election</p>
+</header>
+
+<div class="container">
+    <h2>Vote for Your Candidate</h2>
+    <form id="vote-form" onsubmit="submitVote(event)">
+        <div class="form-group">
+            <label for="candidate">Choose a Candidate:</label>
+            <select id="candidate" name="candidate" required>
+                <option value="">Select a candidate</option>
+                <option value="candidate1">TVK</option> <!-- Candidate 1 -->
+                <option value="candidate2">DMK</option> <!-- Candidate 2 -->
+                <option value="candidate3">NTK</option> <!-- Candidate 3 -->
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="voter-id">Voter ID:</label>
+            <input type="text" id="voter-id" name="voter-id" placeholder="Enter your voter ID" required>
+        </div>
+
+        <button type="submit">Submit Vote</button>
+    </form>
+
+    <!-- Success message after submission -->
+    <div id="message" class="message" style="display: none;">
+        <p>Thank you for voting! Your vote has been successfully submitted.</p>
+    </div>
+</div>
+
+<!-- Display current vote tally -->
+<div class="container" id="vote-display" style="display: none;">
+    <h2>Your Submitted Vote:</h2>
+    <div class="vote-display">
+        <p><strong>Candidate:</strong> <span id="display-candidate"></span></p>
+        <p><strong>Voter ID:</strong> <span id="display-voter-id"></span></p>
+    </div>
+</div>
+
+<!-- Button to trigger password input for winner -->
+<div class="container">
+    <button id="view-winner-btn" onclick="showPasswordInput()">View Winner (Private)</button>
+</div>
+
+<!-- Password input for private view -->
+<div class="container password-container" id="password-container">
+    <h3>Enter Admin Password to View Winner:</h3>
+    <input type="password" id="password" placeholder="Enter password" />
+    <button onclick="checkPassword()">Submit</button>
+    <p id="password-message" style="color: red; display: none;">Incorrect password, please try again.</p>
+</div>
+
+<!-- Winner and Vote Count display for private view -->
+<div class="container" id="winner-display" style="display: none;">
+    <div class="winner-display">
+        <h2>Election Results:</h2>
+        <p><strong>TVK:</strong> <span id="candidate1-votes">0</span> votes</p>
+        <p><strong>DMK:</strong> <span id="candidate2-votes">0</span> votes</p>
+        <p><strong>NTK:</strong> <span id="candidate3-votes">0</span> votes</p>
+        <h3>Winner:</h3>
+        <p><strong>Winner: </strong><span id="winner-name"></span></p>
+        <p><strong>Votes: </strong><span id="winner-votes"></span></p>
+    </div>
+</div>
+
+<footer>
+    <p>&copy; 2024 Election Commission | All Rights Reserved</p>
+</footer>
+
+<script>
+    // Initialize vote counts in localStorage if not already set
+    if (!localStorage.getItem('votes')) {
+        localStorage.setItem('votes', JSON.stringify({ candidate1: 0, candidate2: 0, candidate3: 0 }));
+    }
+
+    // Function to simulate the vote submission
+    function submitVote(event) {
+        event.preventDefault();  // Prevent the form from submitting normally
+
+        const candidate = document.getElementById('candidate').value;
+        const voterId = document.getElementById('voter-id').value;
+
+        if (candidate && voterId) {
+            let votes = JSON.parse(localStorage.getItem('votes'));
+            votes[candidate]++;
+            localStorage.setItem('votes', JSON.stringify(votes));
+
+            document.getElementById('message').style.display = 'block';
+
+            // Display the submitted vote details
+            displayVote();
+
+            // Display updated winner and vote count
+            displayWinner();
+
+            // Optionally, clear the form
+            document.getElementById('vote-form').reset();
+        } else {
+            alert('Please select a candidate and enter your voter ID.');
+        }
+    }
+
+    function displayVote() {
+        const candidate = document.getElementById('candidate').value;
+        const voterId = document.getElementById('voter-id').value;
+
+        document.getElementById('display-candidate').innerText = getCandidateName(candidate);
+        document.getElementById('display-voter-id').innerText = voterId;
+    }
+
+    function getCandidateName(candidate) {
+        switch (candidate) {
+            case 'candidate1': return 'TVK'; // Candidate 1
+            case 'candidate2': return 'DMK'; // Candidate 2
+            case 'candidate3': return 'NTK'; // Candidate 3
+            default: return 'Unknown';
+        }
+    }
+
+    function displayWinner() {
+        let votes = JSON.parse(localStorage.getItem('votes'));
+
+        // Update the vote counts for each candidate
+        document.getElementById('candidate1-votes').innerText = votes.candidate1;
+        document.getElementById('candidate2-votes').innerText = votes.candidate2;
+        document.getElementById('candidate3-votes').innerText = votes.candidate3;
+
+        // Determine the winner
+        let winner = getWinner(votes);
+        document.getElementById('winner-name').innerText = winner.name;
+        document.getElementById('winner-votes').innerText = winner.votes;
+    }
+
+    function getWinner(votes) {
+        const winnerVotes = Math.max(votes.candidate1, votes.candidate2, votes.candidate3);
+
+        let winnerName = '';
+        if (winnerVotes === votes.candidate1) {
+            winnerName = 'TVK';
+        } else if (winnerVotes === votes.candidate2) {
+            winnerName = 'DMK';
+        } else if (winnerVotes === votes.candidate3) {
+            winnerName = 'NTK';
+        }
+
+        return { name: winnerName, votes: winnerVotes };
+    }
+
+    function showPasswordInput() {
+        document.getElementById('password-container').style.display = 'block';
+    }
+
+    function checkPassword() {
+        const password = document.getElementById('password').value;
+        if (password === 'admin123') { // Use your desired admin password here
+            document.getElementById('password-container').style.display = 'none';
+            document.getElementById('winner-display').style.display = 'block';
+        } else {
+            document.getElementById('password-message').style.display = 'block';
+        }
+    }
+</script>
+
+</body>
+</html>
